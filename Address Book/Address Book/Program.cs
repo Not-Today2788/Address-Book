@@ -1,95 +1,171 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 class Contact
 {
-    // Members are private for encapsulation
-    public string FirstName { get; private set; }
-    public string LastName { get; private set; }
-    public string Address { get; private set; }
-    public string City { get; private set; }
-    public string State { get; private set; }
-    public string Zip { get; private set; }
-    public string PhoneNumber { get; private set; }
-    public string Email { get; private set; }
+    private string firstName;
+    private string lastName;
+    private string address;
+    private string city;
+    private string state;
+    private string zip;
+    private string phoneNumber;
+    private string email;
 
-    // Constructor to initialize a contact
-    public Contact(string firstName, string lastName, string address, string city, string state, string zip, string phoneNumber, string email)
+    public string FirstName
     {
-        FirstName = firstName;
-        LastName = lastName;
-        Address = address;
-        City = city;
-        State = state;
-        Zip = zip;
-        PhoneNumber = phoneNumber;
-        Email = email;
+        get { return firstName; }
+        set { firstName = value; }
     }
 
-    // Method to update contact information
-    public void UpdateContact(string firstName, string lastName, string address, string city, string state, string zip, string phoneNumber, string email)
+    public string LastName
     {
-        FirstName = firstName;
-        LastName = lastName;
-        Address = address;
-        City = city;
-        State = state;
-        Zip = zip;
-        PhoneNumber = phoneNumber;
-        Email = email;
+        get { return lastName; }
+        set { lastName = value; }
+    }
+
+    public string Address
+    {
+        get { return address; }
+        set { address = value; }
+    }
+
+    public string City
+    {
+        get { return city; }
+        set { city = value; }
+    }
+
+    public string State
+    {
+        get { return state; }
+        set { state = value; }
+    }
+
+    public string Zip
+    {
+        get { return zip; }
+        set { zip = value; }
+    }
+
+    public string PhoneNumber
+    {
+        get { return phoneNumber; }
+        set { phoneNumber = value; }
+    }
+
+    public string Email
+    {
+        get { return email; }
+        set { email = value; }
     }
 }
 
 class AddressBook
 {
-    internal List<Contact> contacts; // Changed access level to internal
+    private List<Contact> contacts;
 
     public AddressBook()
     {
         contacts = new List<Contact>();
     }
 
-    public void AddContact(Contact contact)
+    public List<Contact> Contacts
     {
-        contacts.Add(contact);
+        get { return contacts; }
     }
 
-    public void DisplayContacts()
+    public bool DoesEmailExist(string email)
+    {
+        return contacts.Any(contact => string.Equals(contact.Email, email, StringComparison.OrdinalIgnoreCase));
+    }
+
+    internal void AddContact(string firstName, string lastName, string address, string city, string state, string zip, string phoneNumber, string email)
+    {
+        if (DoesEmailExist(email))
+        {
+            Console.WriteLine("A contact with the same email already exists. Contact not added.");
+            return;
+        }
+
+        Contact newContact = new Contact();
+        newContact.FirstName = firstName;
+        newContact.LastName = lastName;
+        newContact.Address = address;
+        newContact.City = city;
+        newContact.State = state;
+        newContact.Zip = zip;
+        newContact.PhoneNumber = phoneNumber;
+        newContact.Email = email;
+
+        contacts.Add(newContact);
+        Console.WriteLine("Contact added successfully!");
+    }
+
+    internal void DisplayContacts()
     {
         for (int i = 0; i < contacts.Count; i++)
         {
-            Console.WriteLine($"[{i + 1}] Name: {contacts[i].FirstName} {contacts[i].LastName}");
-            Console.WriteLine($"    Address: {contacts[i].Address}, {contacts[i].City}, {contacts[i].State} - {contacts[i].Zip}");
-            Console.WriteLine($"    Phone Number: {contacts[i].PhoneNumber}");
-            Console.WriteLine($"    Email: {contacts[i].Email}\n");
+            Console.WriteLine($"[{i + 1}] {GetContactInfo(contacts[i])}\n");
         }
     }
 
-    public Contact SearchContact(int index)
+    internal void EditContact(string email, string firstName, string lastName, string address, string city, string state, string zip, string phoneNumber, string newEmail)
     {
-        if (index >= 0 && index < contacts.Count)
+        if (DoesEmailExist(email))
         {
-            return contacts[index];
-        }
-        return null;
-    }
+            int index = contacts.FindIndex(contact => string.Equals(contact.Email, email, StringComparison.OrdinalIgnoreCase));
 
-    public void EditContact(int index, Contact updatedContact)
-    {
-        if (index >= 0 && index < contacts.Count)
-        {
-            // Update the existing contact with the new information
-            contacts[index].UpdateContact(
-                updatedContact.FirstName, updatedContact.LastName, updatedContact.Address,
-                updatedContact.City, updatedContact.State, updatedContact.Zip,
-                updatedContact.PhoneNumber, updatedContact.Email);
+            if (!string.IsNullOrEmpty(newEmail) && !IsEmailUnique(newEmail))
+            {
+                Console.WriteLine("A contact with the same new email already exists. Contact not updated.");
+                return;
+            }
+
+            contacts[index].FirstName = firstName;
+            contacts[index].LastName = lastName;
+            contacts[index].Address = address;
+            contacts[index].City = city;
+            contacts[index].State = state;
+            contacts[index].Zip = zip;
+            contacts[index].PhoneNumber = phoneNumber;
+            contacts[index].Email = string.IsNullOrEmpty(newEmail) ? email : newEmail;
 
             Console.WriteLine("Contact updated successfully!");
         }
         else
         {
-            Console.WriteLine("Invalid index. Contact not found!");
+            Console.WriteLine("No contact found with the provided email. Contact not updated.");
         }
+    }
+
+    internal void DeleteContact(string email)
+    {
+        int index = contacts.FindIndex(contact => string.Equals(contact.Email, email, StringComparison.OrdinalIgnoreCase));
+
+        if (index != -1)
+        {
+            contacts.RemoveAt(index);
+            Console.WriteLine("Contact deleted successfully!");
+        }
+        else
+        {
+            Console.WriteLine("No contact found with the provided email. Contact not deleted.");
+        }
+    }
+
+    private string GetContactInfo(Contact contact)
+    {
+        return $"Name: {contact.FirstName} {contact.LastName}\n" +
+               $"Address: {contact.Address}, {contact.City}, {contact.State} - {contact.Zip}\n" +
+               $"Phone Number: {contact.PhoneNumber}\n" +
+               $"Email: {contact.Email}\n";
+    }
+
+    private bool IsEmailUnique(string email)
+    {
+        return contacts.All(contact => !contact.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
     }
 }
 
@@ -98,42 +174,69 @@ class Program
     static void Main()
     {
         AddressBook addressBook = new AddressBook();
-        bool continueOperations = true;
 
-        while (continueOperations)
+        while (true)
         {
             Console.WriteLine("Menu:");
             Console.WriteLine("1. Add New Contact");
             Console.WriteLine("2. Edit Existing Contact");
-            Console.WriteLine("3. Display All Contacts");
-            Console.WriteLine("4. Exit");
+            Console.WriteLine("3. Delete Contact");
+            Console.WriteLine("4. Display All Contacts");
+            Console.WriteLine("5. Exit");
 
-            Console.Write("Enter your choice (1-4): ");
+            Console.Write("Enter your choice (1-5): ");
             string userInput = Console.ReadLine();
 
             switch (userInput)
             {
                 case "1":
                     // Add a new contact
-                    Contact newContact = GetContactDetails();
-                    addressBook.AddContact(newContact);
-                    Console.WriteLine("Contact added successfully!");
+                    addressBook.AddContact(
+                        GetUserInput("Enter First Name"),
+                        GetUserInput("Enter Last Name"),
+                        GetUserInput("Enter Address"),
+                        GetUserInput("Enter City"),
+                        GetUserInput("Enter State"),
+                        GetUserInput("Enter Zip Code"),
+                        GetUserInput("Enter Phone Number"),
+                        GetUserInput("Enter Email")
+                    );
                     break;
 
                 case "2":
                     // Edit a contact
-                    int editIndex = GetContactIndex(addressBook);
-                    if (editIndex != -1)
+                    string editEmail = GetUserInput("Enter Email of the contact to edit");
+                    if (addressBook.DoesEmailExist(editEmail))
                     {
-                        Contact updatedContact = GetContactDetails();
-                        // Edit the contact in the address book
-                        addressBook.EditContact(editIndex, updatedContact);
+                        addressBook.EditContact(
+                            editEmail,
+                            GetUserInput("Enter New First Name"),
+                            GetUserInput("Enter New Last Name"),
+                            GetUserInput("Enter New Address"),
+                            GetUserInput("Enter New City"),
+                            GetUserInput("Enter New State"),
+                            GetUserInput("Enter New Zip Code"),
+                            GetUserInput("Enter New Phone Number"),
+                            GetUserInput("Enter New Email")
+                        );
+                    }
+                    else
+                    {
+                        Console.WriteLine("No contact found with the provided email. Contact not edited.");
                         Console.WriteLine("Press Enter to continue...");
                         Console.ReadLine();
                     }
                     break;
 
                 case "3":
+                    // Delete a contact
+                    string deleteEmail = GetUserInput("Enter Email of the contact to delete");
+                    addressBook.DeleteContact(deleteEmail);
+                    Console.WriteLine("Press Enter to continue...");
+                    Console.ReadLine();
+                    break;
+
+                case "4":
                     // Display all contacts
                     Console.WriteLine("\nAll Contacts:");
                     addressBook.DisplayContacts();
@@ -141,14 +244,13 @@ class Program
                     Console.ReadLine();
                     break;
 
-                case "4":
+                case "5":
                     // Exit the program
-                    continueOperations = false;
                     Console.WriteLine("Exiting the program. Goodbye!");
-                    break;
+                    return;
 
                 default:
-                    Console.WriteLine("Invalid choice. Please enter a valid option (1-4).");
+                    Console.WriteLine("Invalid choice. Please enter a valid option (1-5).");
                     break;
             }
 
@@ -156,40 +258,9 @@ class Program
         }
     }
 
-    static Contact GetContactDetails()
+    static string GetUserInput(string prompt)
     {
-        Console.Write("Enter First Name: ");
-        string firstName = Console.ReadLine();
-        Console.Write("Enter Last Name: ");
-        string lastName = Console.ReadLine();
-        Console.Write("Enter Address: ");
-        string address = Console.ReadLine();
-        Console.Write("Enter City: ");
-        string city = Console.ReadLine();
-        Console.Write("Enter State: ");
-        string state = Console.ReadLine();
-        Console.Write("Enter Zip Code: ");
-        string zip = Console.ReadLine();
-        Console.Write("Enter Phone Number: ");
-        string phoneNumber = Console.ReadLine();
-        Console.Write("Enter Email: ");
-        string email = Console.ReadLine();
-
-        return new Contact(firstName, lastName, address, city, state, zip, phoneNumber, email);
-    }
-
-    static int GetContactIndex(AddressBook addressBook)
-    {
-        Console.Write("Enter the index of the contact you want to edit: ");
-        if (int.TryParse(Console.ReadLine(), out int editIndex) && editIndex > 0 && editIndex <= addressBook.contacts.Count)
-        {
-            return editIndex - 1; // Adjusting for 0-based indexing
-        }
-        else
-        {
-            Console.WriteLine("Invalid index. Press Enter to continue...");
-            Console.ReadLine();
-            return -1;
-        }
+        Console.Write($"{prompt}: ");
+        return Console.ReadLine();
     }
 }
